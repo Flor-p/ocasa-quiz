@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>OCASA · Diagnóstico Logístico</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   OCASA — Diagnóstico Logístico Interactivo (kiosk iPad)
+   Paleta Logística General (Manual de Marca 2023):
+   Calypso #0099A8 (digital #1DB4C2) 60% · Verde #A1BD39 35% · Naranja #F6A946 5%
+   Tipografía web: Montserrat
+   ============================================================ */
+:root{
+  --calypso:#0099A8;
+  --calypso-digital:#1DB4C2;
+  --calypso-deep:#00727E;
+  --calypso-ink:#083A40;
+  --verde:#A1BD39;
+  --naranja:#F6A946;
+  --ink:#233239;
+  --ink-soft:#5B6B72;
+  --bg:#F4F9F9;
+  --card:#FFFFFF;
+  --line:#DCE9EA;
+  --radius:26px;
+  --shadow:0 10px 34px rgba(8,58,64,.10);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  font-family:'Montserrat',-apple-system,'Segoe UI',sans-serif;
+  background:var(--bg);
+  color:var(--ink);
+  overflow:hidden;
+  user-select:none;-webkit-user-select:none;
+}
+/* Miscelánea de marca: trama de flechas ascendentes, muy sutil */
+.bg-arrows{position:fixed;inset:0;pointer-events:none;opacity:.04;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140' viewBox='95 -50 160 160'%3E%3Cpath d='M187.72 0.526367H150.79C150.351 0.526367 150.176 0.701806 150.176 1.1404V6.75444C150.176 7.19303 150.351 7.36847 150.79 7.36847H176.667L150.439 33.5965C150.176 33.8597 150.176 34.1229 150.439 34.4737L154.386 38.4211C154.649 38.6843 154.913 38.6843 155.264 38.4211L181.492 12.193V38.0702C181.492 38.5088 181.667 38.6843 182.106 38.6843H187.72C188.158 38.6843 188.334 38.5088 188.334 38.0702V1.1404C188.246 0.701806 188.071 0.526367 187.72 0.526367Z' fill='%230099A8'/%3E%3C/svg%3E");
+  background-size:140px 140px;}
+.screen{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:4vh 6vw;opacity:0;visibility:hidden;transform:translateY(22px);
+  transition:opacity .45s ease,transform .45s ease,visibility .45s;}
+.screen.active{opacity:1;visibility:visible;transform:translateY(0)}
+.wrap{width:100%;max-width:860px;margin:0 auto;text-align:center}
+
+/* ---------- marca ---------- */
+.brand{display:flex;align-items:center;gap:10px;justify-content:center}
+.brand svg{display:block}
+.logo-white{--logo-word:#fff;--logo-arrow:#fff}
+.topbar{position:fixed;top:0;left:0;right:0;display:flex;align-items:center;justify-content:space-between;
+  padding:18px 28px;z-index:20;pointer-events:none}
+.progress{position:fixed;top:0;left:0;height:5px;background:linear-gradient(90deg,var(--calypso),var(--calypso-digital));
+  width:0%;transition:width .4s ease;z-index:30;border-radius:0 4px 4px 0}
+
+/* ---------- inicio ---------- */
+#start{background:linear-gradient(150deg,var(--calypso) 0%,var(--calypso-digital) 100%);color:#fff}
+#start h1{font-size:clamp(34px,5.2vw,58px);font-weight:800;line-height:1.12;margin:26px 0 14px}
+#start p.sub{font-size:clamp(17px,2vw,22px);font-weight:400;opacity:.92;margin-bottom:40px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:12px;border:none;cursor:pointer;
+  font-family:inherit;font-weight:700;font-size:20px;padding:22px 54px;border-radius:999px;
+  transition:transform .15s ease,box-shadow .15s ease}
+.btn:active{transform:scale(.96)}
+.btn-light{background:#fff;color:var(--calypso-deep);box-shadow:0 12px 30px rgba(0,0,0,.18)}
+.btn-main{background:var(--calypso);color:#fff;box-shadow:0 12px 26px rgba(0,153,168,.35)}
+.btn-ghost{background:transparent;color:var(--calypso-deep);border:2px solid var(--calypso);padding:20px 44px}
+.stats{display:flex;gap:clamp(18px,5vw,64px);justify-content:center;margin-top:56px;flex-wrap:wrap}
+.stat{text-align:center}
+.stat b{display:block;font-size:clamp(24px,3vw,34px);font-weight:800}
+.stat span{font-size:13px;font-weight:400;opacity:.85;letter-spacing:.04em}
+.time-hint{margin-top:34px;font-size:14px;opacity:.8}
+
+/* ---------- preguntas ---------- */
+.qcount{font-size:14px;font-weight:600;letter-spacing:.18em;color:var(--calypso);margin-bottom:14px;text-transform:uppercase}
+h2.q{font-size:clamp(26px,3.6vw,40px);font-weight:800;line-height:1.18;margin-bottom:10px;color:var(--calypso-ink)}
+p.qhelp{font-size:clamp(15px,1.7vw,18px);color:var(--ink-soft);margin-bottom:34px}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px;width:100%}
+.opts.cols-1{grid-template-columns:1fr;max-width:640px;margin:0 auto}
+.opt{background:var(--card);border:2px solid var(--line);border-radius:var(--radius);padding:24px 22px;
+  display:flex;align-items:center;gap:16px;cursor:pointer;text-align:left;font-family:inherit;
+  font-size:clamp(16px,1.8vw,19px);font-weight:600;color:var(--ink);min-height:78px;
+  transition:border-color .15s,box-shadow .15s,transform .12s}
+.opt .ico{flex:0 0 auto;width:52px;height:52px;border-radius:16px;background:#E5F4F5;display:flex;
+  align-items:center;justify-content:center;font-size:24px}
+.opt:active{transform:scale(.975)}
+.opt.sel{border-color:var(--calypso);box-shadow:0 0 0 3px rgba(0,153,168,.18);background:#F2FBFC}
+.backrow{margin-top:30px}
+.backlink{background:none;border:none;font-family:inherit;font-size:15px;font-weight:600;color:var(--ink-soft);
+  cursor:pointer;padding:12px 20px}
+
+/* ---------- datos ---------- */
+.fields{display:flex;flex-direction:column;gap:18px;max-width:560px;margin:0 auto 30px;width:100%}
+.field{text-align:left}
+.field label{display:block;font-size:14px;font-weight:700;letter-spacing:.05em;color:var(--calypso-deep);margin-bottom:8px;text-transform:uppercase}
+.field input{width:100%;font-family:inherit;font-size:20px;font-weight:600;color:var(--ink);
+  padding:18px 22px;border:2px solid var(--line);border-radius:18px;background:#fff;outline:none;transition:border-color .15s}
+.field input:focus{border-color:var(--calypso)}
+.field input.err{border-color:var(--naranja)}
+
+/* ---------- dashboard ---------- */
+#result{justify-content:flex-start;padding-top:9vh;overflow-y:auto}
+.dash{width:100%;max-width:900px;margin:0 auto;text-align:center;padding-bottom:40px}
+.dash-head{margin-bottom:6px}
+.dash-head .hola{font-size:clamp(16px,2vw,20px);color:var(--ink-soft);font-weight:400}
+.dash-head h2{font-size:clamp(26px,3.4vw,38px);font-weight:800;color:var(--calypso-ink);margin:6px 0 2px}
+.seg-chip{display:inline-block;background:#E5F4F5;color:var(--calypso-deep);font-size:13px;font-weight:700;
+  letter-spacing:.08em;padding:8px 18px;border-radius:999px;margin-top:10px;text-transform:uppercase}
+.dash-grid{display:grid;grid-template-columns:340px 1fr;gap:18px;margin-top:26px;align-items:stretch}
+.card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:28px}
+.gauge-card{display:flex;flex-direction:column;align-items:center;justify-content:center}
+.gauge-wrap{position:relative;width:250px;height:150px}
+.gauge-wrap svg{width:250px;height:150px;display:block}
+.gauge-num{position:absolute;left:0;right:0;bottom:2px;font-size:52px;font-weight:800;color:var(--calypso-ink);line-height:1}
+.gauge-num small{font-size:18px;font-weight:600;color:var(--ink-soft)}
+.gauge-label{margin-top:10px;font-size:13px;font-weight:700;letter-spacing:.14em;color:var(--ink-soft);text-transform:uppercase}
+.perfil-nombre{margin-top:14px;font-size:clamp(20px,2.4vw,26px);font-weight:800;color:var(--calypso)}
+.dims-card{text-align:left}
+.dims-card h3,.reco-card h3{font-size:13px;font-weight:700;letter-spacing:.14em;color:var(--ink-soft);
+  text-transform:uppercase;margin-bottom:18px}
+.dim{margin-bottom:18px}
+.dim:last-child{margin-bottom:0}
+.dim-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:7px}
+.dim-top .nm{font-size:15px;font-weight:700;color:var(--ink)}
+.dim-top .vl{font-size:15px;font-weight:800;color:var(--calypso-deep)}
+.bar{height:12px;background:#E9F1F2;border-radius:999px;overflow:hidden}
+.bar i{display:block;height:100%;width:0%;border-radius:999px;background:linear-gradient(90deg,var(--calypso),var(--calypso-digital));
+  transition:width 1s cubic-bezier(.2,.7,.3,1)}
+.bar i.weak{background:linear-gradient(90deg,var(--naranja),#F8BE6E)}
+.dim-note{font-size:12.5px;color:var(--ink-soft);margin-top:6px;font-weight:400;line-height:1.45}
+.perfil-card{grid-column:1/-1;text-align:left;border-left:8px solid var(--calypso)}
+.perfil-card p{font-size:clamp(15.5px,1.8vw,18px);line-height:1.6;color:var(--ink);font-weight:400}
+.reco-card{grid-column:1/-1;text-align:left;background:linear-gradient(135deg,var(--calypso) 0%,var(--calypso-deep) 100%);color:#fff}
+.reco-card h3{color:rgba(255,255,255,.75)}
+.reco-card .reco-tit{font-size:clamp(19px,2.3vw,24px);font-weight:800;margin-bottom:10px}
+.reco-card p{font-size:clamp(15px,1.7vw,17px);line-height:1.6;font-weight:400;opacity:.95}
+.reco-card .flecha{float:right;margin-left:14px}
+.cta-row{display:flex;gap:16px;justify-content:center;margin-top:30px;flex-wrap:wrap}
+
+/* ---------- modal compartir ---------- */
+.modal-bg{position:fixed;inset:0;background:rgba(8,58,64,.55);display:flex;align-items:center;justify-content:center;
+  opacity:0;visibility:hidden;transition:opacity .3s;z-index:50;padding:24px}
+.modal-bg.open{opacity:1;visibility:visible}
+.modal{background:#fff;border-radius:30px;max-width:560px;width:100%;padding:40px 38px;text-align:center;
+  transform:translateY(16px);transition:transform .3s;max-height:92vh;overflow-y:auto}
+.modal-bg.open .modal{transform:translateY(0)}
+.modal h3{font-size:24px;font-weight:800;color:var(--calypso-ink);margin-bottom:8px}
+.modal p.mp{font-size:15px;color:var(--ink-soft);margin-bottom:24px;line-height:1.5}
+.modal .fields{margin-bottom:8px}
+.consent{display:flex;gap:12px;align-items:flex-start;text-align:left;margin:14px auto 22px;max-width:480px}
+.consent input{width:22px;height:22px;margin-top:2px;accent-color:var(--calypso)}
+.consent span{font-size:13px;color:var(--ink-soft);line-height:1.5}
+.modal .btn{width:100%;margin-bottom:12px}
+.btn-wa{background:#25D366;color:#fff}
+.modal .cancel{background:none;border:none;font-family:inherit;font-size:15px;font-weight:600;color:var(--ink-soft);cursor:pointer;padding:10px}
+
+/* ---------- gracias ---------- */
+#thanks{background:linear-gradient(150deg,var(--calypso) 0%,var(--calypso-digital) 100%);color:#fff}
+#thanks h2{font-size:clamp(30px,4.4vw,48px);font-weight:800;margin:24px 0 12px}
+#thanks p{font-size:clamp(16px,2vw,20px);opacity:.92;margin-bottom:40px;font-weight:400}
+.check-anim{width:110px;height:110px;border-radius:50%;background:rgba(255,255,255,.18);display:flex;
+  align-items:center;justify-content:center;margin:0 auto}
+
+@media (max-width:760px){
+  .dash-grid{grid-template-columns:1fr}
+  .opts{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<!-- Isologo oficial OCASA (SVG de ocasa.com). --logo-word / --logo-arrow permiten la variante blanca. -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+<defs>
+<symbol id="ocasa-logo" viewBox="0 0 189 40">
+  <path d="M14.2105 39.2982H11.2281C4.38597 39.2982 0 35 0 28.5965V10.7018C0 4.29825 4.47368 0 11.2281 0H14.2105C20.9649 0 25.4386 4.29825 25.4386 10.7018V28.5965C25.4386 35 20.9649 39.2982 14.2105 39.2982ZM18.5088 10.7018C18.5088 8.24561 16.6667 6.31579 14.2105 6.31579H11.2281C8.77193 6.31579 6.84211 8.24561 6.84211 10.7018V28.5965C6.84211 31.0526 8.77193 32.9825 11.2281 32.9825H14.2105C16.6667 32.9825 18.5088 31.1404 18.5088 28.5965V10.7018Z" fill="var(--logo-word,#231F20)"/>
+  <path d="M54.9123 32.0175C54.9123 32.6316 54.0351 34.386 52.0175 36.4912C50.1754 38.3333 47.6316 39.2982 44.2105 39.2982H41.2281C34.386 39.2982 30 35 30 28.5965V10.7018C30 4.29825 34.4737 0 41.2281 0H44.2105C46.9298 0 49.2105 0.614035 51.0526 2.01754C53.5088 3.77193 54.9123 6.49123 54.9123 7.19298C54.9123 7.45614 54.8246 7.54386 54.5614 7.7193L49.2982 10.3509C49.2105 10.4386 49.0351 10.4386 49.0351 10.4386C48.6842 10.4386 48.5088 10.0877 48.1579 9.38596C47.1053 7.36842 45.9649 6.31579 44.2105 6.31579H41.2281C38.7719 6.31579 36.8421 8.24561 36.8421 10.7018V28.5965C36.8421 31.0526 38.7719 32.9825 41.2281 32.9825H44.2105C45.9649 32.9825 47.0175 32.0175 48.0702 30.0877C48.4211 29.386 48.6842 28.9474 48.9474 28.9474C49.0351 28.9474 49.1228 28.9474 49.2105 29.0351L54.4737 31.6667C54.7368 31.6667 54.9123 31.8421 54.9123 32.0175Z" fill="var(--logo-word,#231F20)"/>
+  <path d="M84.8244 38.1579C84.8244 38.5088 84.5612 38.6842 84.1226 38.6842H77.9823C77.6314 38.6842 77.4559 38.5965 77.3682 38.2456L75.5261 31.9298C75.4384 31.6666 75.263 31.5789 74.9121 31.5789H66.2279C65.877 31.5789 65.7016 31.6666 65.6138 31.9298L63.7717 38.2456C63.684 38.5088 63.5086 38.6842 63.1577 38.6842H57.1051C56.6665 38.6842 56.4033 38.5088 56.4033 38.1579C56.5788 38.0702 67.8945 1.05261 67.8945 1.05261C67.9823 0.789452 68.1577 0.614014 68.5086 0.614014H72.8945C73.1577 0.614014 73.4209 0.701733 73.5086 1.05261C73.5086 1.05261 84.8244 38.0702 84.8244 38.1579ZM70.7016 13.1579C70.263 15 67.8068 24.6491 67.8068 24.7368C67.8068 25.0877 68.07 25.2631 68.5086 25.2631H72.8945C73.3331 25.2631 73.5963 25.0877 73.5963 24.7368C73.5086 24.6491 71.0524 15 70.7016 13.1579Z" fill="var(--logo-word,#231F20)"/>
+  <path d="M95.0881 10.7018C95.0881 13.5088 97.8951 14.386 102.106 16.3158C108.597 19.2982 111.579 22.6316 111.579 28.5965C111.579 35 107.193 39.2982 100.351 39.2982H97.8951C94.4741 39.2982 91.8425 38.3333 90.0004 36.4912C87.9828 34.4737 87.1934 32.7193 87.1934 32.1053C87.1934 32.0175 87.2811 31.8421 87.5442 31.6667L92.8074 29.0351C92.8951 28.9474 92.9828 28.9474 93.0706 28.9474C93.5091 28.9474 93.5969 29.5614 94.2109 30.7895C94.9127 32.0175 96.4039 32.9825 97.8074 32.9825H100.264C102.632 32.9825 104.65 31.0526 104.65 28.5965C104.65 25.5263 102.106 24.4737 98.1583 22.6316C91.4916 19.386 88.0706 16.6667 88.0706 10.7018C88.0706 4.29825 92.5442 0 99.2986 0H100.176C102.983 0 105.176 0.614035 107.106 2.01754C109.474 3.68421 110.965 6.40351 110.965 7.19298C110.965 7.45614 110.878 7.54386 110.614 7.7193L105.351 10.3509C105.264 10.4386 105.088 10.4386 105.088 10.4386C104.825 10.4386 104.65 10.0877 104.299 9.5614C103.158 7.63158 102.106 6.57895 100.264 6.57895H99.3863C97.1056 6.31579 95.0881 8.24561 95.0881 10.7018Z" fill="var(--logo-word,#231F20)"/>
+  <path d="M142.193 38.1579C142.193 38.5088 141.929 38.6842 141.491 38.6842H135.35C135 38.6842 134.824 38.5965 134.736 38.2456L132.894 31.9298C132.807 31.6666 132.631 31.5789 132.28 31.5789H123.596C123.245 31.5789 123.07 31.6666 122.982 31.9298L121.14 38.2456C121.052 38.5088 120.877 38.6842 120.526 38.6842H114.473C114.035 38.6842 113.771 38.5088 113.771 38.1579C114.035 38.0702 125.35 1.05261 125.35 1.05261C125.438 0.789452 125.614 0.614014 125.964 0.614014H130.35C130.614 0.614014 130.877 0.701733 130.964 1.05261C130.877 1.05261 142.193 38.0702 142.193 38.1579ZM128.157 13.1579C127.719 15 125.263 24.6491 125.263 24.7368C125.263 25.0877 125.526 25.2631 125.964 25.2631H130.35C130.789 25.2631 131.052 25.0877 131.052 24.7368C130.964 24.6491 128.508 15 128.157 13.1579Z" fill="var(--logo-word,#231F20)"/>
+  <path d="M187.72 0.526367H150.79C150.351 0.526367 150.176 0.701806 150.176 1.1404V6.75444C150.176 7.19303 150.351 7.36847 150.79 7.36847H176.667L150.439 33.5965C150.176 33.8597 150.176 34.1229 150.439 34.4737L154.386 38.4211C154.649 38.6843 154.913 38.6843 155.264 38.4211L181.492 12.193V38.0702C181.492 38.5088 181.667 38.6843 182.106 38.6843H187.72C188.158 38.6843 188.334 38.5088 188.334 38.0702V1.1404C188.246 0.701806 188.071 0.526367 187.72 0.526367Z" fill="var(--logo-arrow,#0099A8)"/>
+</symbol>
+<symbol id="ocasa-flecha" viewBox="149.7 0 39.2 40">
+  <path d="M187.72 0.526367H150.79C150.351 0.526367 150.176 0.701806 150.176 1.1404V6.75444C150.176 7.19303 150.351 7.36847 150.79 7.36847H176.667L150.439 33.5965C150.176 33.8597 150.176 34.1229 150.439 34.4737L154.386 38.4211C154.649 38.6843 154.913 38.6843 155.264 38.4211L181.492 12.193V38.0702C181.492 38.5088 181.667 38.6843 182.106 38.6843H187.72C188.158 38.6843 188.334 38.5088 188.334 38.0702V1.1404C188.246 0.701806 188.071 0.526367 187.72 0.526367Z" fill="currentColor"/>
+</symbol>
+</defs>
+</svg>
+<div class="bg-arrows"></div>
+<div class="progress" id="progress"></div>
+
+<div class="topbar" id="topbar" style="display:none">
+  <div class="brand">
+    <svg width="104" height="22" viewBox="0 0 189 40"><use href="#ocasa-logo"/></svg>
+  </div>
+  <div style="font-size:12px;font-weight:600;color:var(--ink-soft);letter-spacing:.1em">DIAGNÓSTICO LOGÍSTICO</div>
+</div>
+
+<!-- ============ INICIO ============ -->
+<section class="screen active" id="start">
+  <div class="wrap">
+    <div class="brand logo-white">
+      <svg width="180" height="38" viewBox="0 0 189 40"><use href="#ocasa-logo"/></svg>
+    </div>
+    <h1>¿Tu logística está lista<br>para tu próximo salto?</h1>
+    <p class="sub">Respondé 7 preguntas y llevate un diagnóstico personalizado<br>de cómo la logística puede hacer crecer tu negocio.</p>
+    <button class="btn btn-light" onclick="app.start()">Hacer mi diagnóstico
+      <svg width="19" height="19" viewBox="0 0 39.2 40"><use href="#ocasa-flecha"/></svg>
+    </button>
+    <div class="time-hint">⏱ Menos de 1 minuto</div>
+    <div class="stats">
+      <div class="stat"><b>+40</b><span>años</span></div>
+      <div class="stat"><b>6M</b><span>paquetes por mes</span></div>
+      <div class="stat"><b>11</b><span>países</span></div>
+      <div class="stat"><b>+3100</b><span>colaboradores</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ PREGUNTAS (se renderizan por JS) ============ -->
+<section class="screen" id="question">
+  <div class="wrap">
+    <div class="qcount" id="qcount"></div>
+    <h2 class="q" id="qtitle"></h2>
+    <p class="qhelp" id="qhelp"></p>
+    <div class="opts" id="qopts"></div>
+    <div class="backrow"><button class="backlink" onclick="app.back()">← Volver</button></div>
+  </div>
+</section>
+
+<!-- ============ DATOS ============ -->
+<section class="screen" id="who">
+  <div class="wrap">
+    <div class="qcount">ÚLTIMO PASO</div>
+    <h2 class="q">Tu diagnóstico está listo.<br>¿A nombre de quién lo preparamos?</h2>
+    <p class="qhelp">Así lo personalizamos para vos y tu negocio.</p>
+    <div class="fields">
+      <div class="field"><label>Tu nombre</label><input type="text" id="f-nombre" autocomplete="off" placeholder="Ej.: Valentina"></div>
+      <div class="field"><label>Tu empresa o marca</label><input type="text" id="f-empresa" autocomplete="off" placeholder="Ej.: Tienda Aurora"></div>
+    </div>
+    <button class="btn btn-main" onclick="app.showResult()">Ver mi diagnóstico
+      <svg width="19" height="19" viewBox="0 0 39.2 40"><use href="#ocasa-flecha"/></svg>
+    </button>
+    <div class="backrow"><button class="backlink" onclick="app.back()">← Volver</button></div>
+  </div>
+</section>
+
+<!-- ============ DASHBOARD ============ -->
+<section class="screen" id="result">
+  <div class="dash">
+    <div class="dash-head">
+      <div class="hola" id="r-hola"></div>
+      <h2 id="r-titulo">Diagnóstico logístico</h2>
+      <span class="seg-chip" id="r-seg"></span>
+    </div>
+    <div class="dash-grid">
+      <div class="card gauge-card">
+        <div class="gauge-wrap">
+          <svg viewBox="0 0 250 150">
+            <path d="M25 135 A100 100 0 0 1 225 135" fill="none" stroke="#E9F1F2" stroke-width="22" stroke-linecap="round"/>
+            <path id="gauge-arc" d="M25 135 A100 100 0 0 1 225 135" fill="none" stroke="url(#ggrad)" stroke-width="22" stroke-linecap="round" stroke-dasharray="314" stroke-dashoffset="314"/>
+            <defs><linearGradient id="ggrad" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stop-color="#0099A8"/><stop offset="100%" stop-color="#1DB4C2"/>
+            </linearGradient></defs>
+          </svg>
+          <div class="gauge-num"><span id="r-indice">0</span><small>/100</small></div>
+        </div>
+        <div class="gauge-label">Índice de madurez logística</div>
+        <div class="perfil-nombre" id="r-perfil"></div>
+      </div>
+      <div class="card dims-card">
+        <h3>Tus 4 dimensiones</h3>
+        <div id="r-dims"></div>
+      </div>
+      <div class="card perfil-card"><p id="r-desc"></p></div>
+      <div class="card reco-card">
+        <svg class="flecha" width="44" height="44" viewBox="0 0 39.2 40" style="color:#A1BD39"><use href="#ocasa-flecha"/></svg>
+        <h3>Tu próximo paso con OCASA</h3>
+        <div class="reco-tit" id="r-reco-tit"></div>
+        <p id="r-reco-txt"></p>
+      </div>
+    </div>
+    <div class="cta-row">
+      <button class="btn btn-main" onclick="app.openShare()">📩 Recibir mi diagnóstico</button>
+      <button class="btn btn-ghost" onclick="app.reset()">Terminar</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============ MODAL COMPARTIR ============ -->
+<div class="modal-bg" id="share">
+  <div class="modal">
+    <h3>Llevate tu diagnóstico</h3>
+    <p class="mp">Te lo enviamos con el detalle completo y los próximos pasos recomendados.</p>
+    <div class="fields">
+      <div class="field"><label>WhatsApp</label><input type="tel" id="f-wa" autocomplete="off" inputmode="tel" placeholder="Ej.: +54 9 11 5555 5555"></div>
+      <div class="field"><label>Correo electrónico</label><input type="email" id="f-email" autocomplete="off" inputmode="email" placeholder="Ej.: vos@tuempresa.com"></div>
+    </div>
+    <label class="consent"><input type="checkbox" id="f-consent" checked>
+      <span>Acepto que OCASA me contacte para enviarme el diagnóstico y propuestas relacionadas con mi negocio.</span></label>
+    <button class="btn btn-main" onclick="app.send()">Enviar mi diagnóstico</button>
+    <button class="cancel" onclick="app.closeShare()">Ahora no</button>
+  </div>
+</div>
+
+<!-- ============ GRACIAS ============ -->
+<section class="screen" id="thanks">
+  <div class="wrap">
+    <div class="check-anim" style="color:#fff">
+      <svg width="50" height="50" viewBox="0 0 39.2 40"><use href="#ocasa-flecha"/></svg>
+    </div>
+    <h2 id="t-titulo">¡Listo!</h2>
+    <p id="t-txt">Tu diagnóstico ya está en camino.<br>Gracias por acercarte al stand de OCASA.</p>
+    <button class="btn btn-light" onclick="app.reset()">Hacer otro diagnóstico</button>
+  </div>
+</section>
+
+<script>
+/* ================================================================
+   CONFIGURACIÓN
+   SHEETS_ENDPOINT: URL del Web App de Google Apps Script que guarda
+   el lead en Google Sheets y dispara el email con el diagnóstico.
+   Si queda vacío, el prototipo funciona en modo demo (no envía).
+   ================================================================ */
+const CONFIG = {
+  SHEETS_ENDPOINT: "https://script.google.com/a/macros/ocasa.com/s/AKfycbzvmisdugoWzHcT4_oGaHOZf45RZTU_259-fjnk5IAoSZdkXZXrkc60tUVOfXBPXlVW/exec",           // ← pegar acá la URL /exec del Apps Script
+  EVENTO: "Evento OCASA 2026",   // etiqueta del evento para el registro del lead
+  RESET_MS: 120000               // auto-reinicio del kiosco tras 2 min de inactividad
+};
+
+/* ================================================================
+   PREGUNTAS Y LÓGICA DE SCORING
+   4 dimensiones de madurez (0–100 c/u):
+   alcance · capacidad · tecnologia · eficiencia
+   Índice general = alcance*.20 + capacidad*.30 + tecnologia*.25 + eficiencia*.25
+   El volumen (P2) no puntúa: define el segmento (ajusta el relato).
+   El desafío (P7) no puntúa: orienta la recomendación.
+   ================================================================ */
+const QUESTIONS = [
+  {
+    id:"rubro", count:"Pregunta 1 de 7",
+    title:"¿Qué describe mejor a tu negocio?",
+    help:"Para hablar tu mismo idioma.",
+    opts:[
+      {t:"eCommerce", i:"🛒"},
+      {t:"Retail / tiendas físicas", i:"🏬"},
+      {t:"Marketplace", i:"🌐"},
+      {t:"Industria / B2B", i:"🏭"},
+      {t:"Emprendimiento en crecimiento", i:"🚀"}
+    ]
+  },
+  {
+    id:"volumen", count:"Pregunta 2 de 7",
+    title:"¿Cuántos envíos hacen por mes?",
+    help:"Un número aproximado alcanza.",
+    opts:[
+      {t:"Recién empezamos (menos de 100)", i:"🌱", seg:"EMPRENDEDOR"},
+      {t:"100 a 1.000", i:"📦", seg:"PYME"},
+      {t:"1.000 a 10.000", i:"📈", seg:"EMPRESA"},
+      {t:"Más de 10.000", i:"🏆", seg:"EMPRESA"}
+    ]
+  },
+  {
+    id:"alcance", count:"Pregunta 3 de 7", dim:"alcance",
+    title:"¿Hasta dónde llegan hoy tus entregas?",
+    help:"Tu cobertura actual, no la soñada.",
+    opts:[
+      {t:"Mi ciudad y alrededores", i:"📍", s:25},
+      {t:"Varias provincias", i:"🗺️", s:55},
+      {t:"Todo el país", i:"🇦🇷", s:80},
+      {t:"También al exterior", i:"✈️", s:100}
+    ]
+  },
+  {
+    id:"capacidad", count:"Pregunta 4 de 7", dim:"capacidad",
+    title:"Cuando las ventas explotan (Hot Sale, fiestas)… ¿qué pasa?",
+    help:"Sé honesto: acá nadie te juzga.",
+    opts:[
+      {t:"Se nos complica todo: demoras y reclamos", i:"🔥", s:20},
+      {t:"Cumplimos, pero a un costo enorme", i:"😮‍💨", s:50},
+      {t:"Escalamos sin problemas", i:"💪", s:85},
+      {t:"Los picos son nuestro mejor momento", i:"⚡", s:100}
+    ]
+  },
+  {
+    id:"tecnologia", count:"Pregunta 5 de 7", dim:"tecnologia",
+    title:"¿Cómo sigue tu cliente su pedido?",
+    help:"Desde que compra hasta que lo recibe.",
+    opts:[
+      {t:"No hay seguimiento: pregunta y respondemos", i:"🤷", s:15},
+      {t:"Le avisamos nosotros por WhatsApp o mail", i:"💬", s:45},
+      {t:"Tracking automático con link", i:"🔎", s:75},
+      {t:"Tracking en tiempo real, integrado a mi tienda", i:"🛰️", s:100}
+    ]
+  },
+  {
+    id:"eficiencia", count:"Pregunta 6 de 7", dim:"eficiencia",
+    title:"¿Cuánto tiempo del equipo se va en resolver logística?",
+    help:"Embalar, despachar, reclamar, coordinar…",
+    opts:[
+      {t:"Muchísimo: es un dolor de todos los días", i:"⏳", s:20},
+      {t:"Bastante más del que quisiéramos", i:"⚖️", s:50},
+      {t:"Poco: está bien resuelta y fluye", i:"✅", s:85},
+      {t:"Casi nada: está 100% delegada y medida", i:"🧘", s:100}
+    ]
+  },
+  {
+    id:"desafio", count:"Pregunta 7 de 7",
+    title:"¿Cuál es hoy tu principal desafío?",
+    help:"El primero que te quita el sueño.",
+    opts:[
+      {t:"Bajar costos logísticos", i:"💰", k:"costos"},
+      {t:"Entregar más rápido", i:"⚡", k:"rapidez"},
+      {t:"Llegar a más lugares", i:"🗺️", k:"cobertura"},
+      {t:"Delegar almacenamiento y despacho", i:"📦", k:"fulfillment"},
+      {t:"Vender a otros países", i:"✈️", k:"crossborder"},
+      {t:"Integrar tecnología y datos", i:"🖥️", k:"tecnologia"},
+      {t:"Mejorar la experiencia post-venta", i:"❤️", k:"experiencia"}
+    ]
+  }
+];
+
+const DIM_META = {
+  alcance:    {n:"Alcance",     w:.20, note:{low:"Tu cobertura todavía le pone techo a tus ventas.", high:"Tu cobertura acompaña la ambición del negocio."}},
+  capacidad:  {n:"Capacidad de escala", w:.30, note:{low:"Los picos de demanda hoy te cuestan plata y clientes.", high:"Tu operación absorbe picos sin resentirse."}},
+  tecnologia: {n:"Tecnología y visibilidad", w:.25, note:{low:"Sin tracking automático, cada pedido genera consultas.", high:"Tus clientes saben dónde está su pedido sin preguntar."}},
+  eficiencia: {n:"Eficiencia operativa", w:.25, note:{low:"La logística te está robando tiempo de vender.", high:"Tu energía está en el negocio, no en los despachos."}}
+};
+
+const PERFILES = [
+  {min:0,  max:39, n:"Logística Artesanal",
+   d:"Tu negocio funciona a pura garra: cada envío depende del esfuerzo de tu equipo. Eso habla bien de ustedes, pero mal del sistema. La buena noticia: sos exactamente el tipo de negocio que más crece cuando profesionaliza su logística. El salto de madurez que tenés por delante se traduce directo en más ventas, menos costos y clientes que vuelven."},
+  {min:40, max:64, n:"Logística en Despegue",
+   d:"Tu negocio creció más rápido que tu logística, y eso es un gran problema para tener: significa que vendés. Pero cada punto de fricción —picos que duelen, poca visibilidad, tiempo operativo— se está comiendo margen y oportunidades. Con los socios y procesos correctos, tu operación puede pasar de acompañar el crecimiento a impulsarlo."},
+  {min:65, max:84, n:"Logística Profesional",
+   d:"Tenés una operación sólida, con procesos que funcionan. El próximo nivel ya no se juega en cumplir: se juega en convertir la logística en ventaja competitiva. Optimización de red, datos en tiempo real y nuevas geografías son tus palancas para ganarle a competidores que todavía ven la logística como un costo."},
+  {min:85, max:100, n:"Logística Plataforma",
+   d:"Tu logística ya es una plataforma de crecimiento: escalás, medís y entregás experiencia. Los desafíos que te quedan son estratégicos: expansión regional, eficiencia fina de red y tecnología que anticipe la demanda. Es exactamente la liga en la que juega OCASA, con operación en 11 países y 6 millones de paquetes por mes."}
+];
+
+const RECOS = {
+  costos:{t:"Eficiencia de red y consolidación",
+    x:"Con más de 40 años de operación y 6 millones de paquetes por mes, OCASA optimiza tu matriz logística: consolidación, rutas inteligentes y tarifas que escalan con tu volumen. Pagás por eficiencia, no por estructura."},
+  rapidez:{t:"Última milla que cumple lo que tu marca promete",
+    x:"Entregas más rápidas y predecibles con una red de distribución que combina cobertura, tecnología de ruteo y visibilidad en tiempo real. La velocidad deja de ser promesa y pasa a ser estándar."},
+  cobertura:{t:"Cobertura nacional y regional, sin inversión propia",
+    x:"Llegá a todo el país —y a 11 países de la región— con la red de OCASA, sin abrir depósitos ni armar flota. Tu próximo mercado está a una integración de distancia."},
+  fulfillment:{t:"Fulfillment: delegá la operación, quedate con el negocio",
+    x:"Almacenamiento, picking, packing y despacho en infraestructura OCASA. Tu stock protegido, tus pedidos saliendo en tiempo récord y tu equipo enfocado en vender."},
+  crossborder:{t:"Cross Border: tu marca cruzando fronteras",
+    x:"Soluciones puerta a puerta para vender en el exterior: aduana, distribución internacional y tracking end-to-end en una sola operación. La expansión Latam deja de ser un plan y empieza a ser un canal."},
+  tecnologia:{t:"Tecnología aplicada a la logística",
+    x:"Integraciones con tu tienda y tus sistemas, tracking en tiempo real y datos para decidir. En OCASA la tecnología no es un accesorio: es parte de la solución."},
+  experiencia:{t:"Experiencia de entrega que fideliza",
+    x:"La entrega es el único momento físico de tu eCommerce: hagamos que juegue a favor. Visibilidad para tu cliente, gestión proactiva de incidencias y una post-venta que convierte compradores en fans."}
+};
+
+/* ================================================================
+   APP
+   ================================================================ */
+const app = {
+  step:-1, answers:{}, scores:{}, indice:0, perfil:null, seg:"", sent:false,
+
+  show(id){
+    document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+    document.getElementById(id).classList.add("active");
+    document.getElementById("topbar").style.display = (id==="start") ? "none":"flex";
+  },
+  setProgress(p){ document.getElementById("progress").style.width = p+"%"; },
+
+  start(){ this.answers={}; this.sent=false; this.step=0; this.renderQ(); },
+
+  renderQ(){
+    const q = QUESTIONS[this.step];
+    document.getElementById("qcount").textContent = q.count;
+    document.getElementById("qtitle").textContent = q.title;
+    document.getElementById("qhelp").textContent = q.help;
+    const box = document.getElementById("qopts");
+    box.className = "opts" + (q.opts.length>5 ? "":" ");
+    box.innerHTML = "";
+    q.opts.forEach((o,idx)=>{
+      const b = document.createElement("button");
+      b.className = "opt" + (this.answers[q.id]===idx ? " sel":"");
+      b.innerHTML = `<span class="ico">${o.i}</span><span>${o.t}</span>`;
+      b.onclick = ()=>{ this.pick(idx,b); };
+      box.appendChild(b);
+    });
+    this.setProgress((this.step)/(QUESTIONS.length+1)*100);
+    this.show("question");
+  },
+
+  pick(idx,btn){
+    const q = QUESTIONS[this.step];
+    this.answers[q.id] = idx;
+    document.querySelectorAll("#qopts .opt").forEach(o=>o.classList.remove("sel"));
+    btn.classList.add("sel");
+    setTimeout(()=>{
+      if(this.step < QUESTIONS.length-1){ this.step++; this.renderQ(); }
+      else { this.setProgress((QUESTIONS.length)/(QUESTIONS.length+1)*100); this.show("who");
+             setTimeout(()=>document.getElementById("f-nombre").focus(),500); }
+    },350);
+  },
+
+  back(){
+    const active = document.querySelector(".screen.active").id;
+    if(active==="who"){ this.step = QUESTIONS.length-1; this.renderQ(); return; }
+    if(this.step>0){ this.step--; this.renderQ(); }
+    else this.reset();
+  },
+
+  compute(){
+    this.scores = {};
+    QUESTIONS.forEach(q=>{
+      if(q.dim){ this.scores[q.dim] = q.opts[this.answers[q.id]].s; }
+    });
+    let idx = 0;
+    for(const d in DIM_META){ idx += this.scores[d]*DIM_META[d].w; }
+    this.indice = Math.round(idx);
+    this.perfil = PERFILES.find(p=>this.indice>=p.min && this.indice<=p.max);
+    this.seg = QUESTIONS[1].opts[this.answers.volumen].seg;
+  },
+
+  showResult(){
+    const nombre = document.getElementById("f-nombre").value.trim();
+    const empresa = document.getElementById("f-empresa").value.trim();
+    if(!nombre){ const f=document.getElementById("f-nombre"); f.classList.add("err"); f.focus(); return; }
+    this.nombre=nombre; this.empresa=empresa;
+    document.getElementById("f-nombre").classList.remove("err");
+    this.compute();
+    /* pintar dashboard */
+    document.getElementById("r-hola").textContent = `Hola, ${nombre} 👋 Este es el diagnóstico de ${empresa||"tu negocio"}:`;
+    document.getElementById("r-seg").textContent = "Perfil " + (this.seg||"").toLowerCase();
+    document.getElementById("r-perfil").textContent = this.perfil.n;
+    document.getElementById("r-desc").textContent = this.perfil.d;
+    const reco = RECOS[QUESTIONS[6].opts[this.answers.desafio].k];
+    document.getElementById("r-reco-tit").textContent = reco.t;
+    document.getElementById("r-reco-txt").textContent = reco.x;
+    /* dimensiones */
+    const dimsBox = document.getElementById("r-dims"); dimsBox.innerHTML="";
+    const weakest = Object.keys(this.scores).sort((a,b)=>this.scores[a]-this.scores[b])[0];
+    for(const d in DIM_META){
+      const v = this.scores[d];
+      dimsBox.insertAdjacentHTML("beforeend",
+        `<div class="dim">
+           <div class="dim-top"><span class="nm">${DIM_META[d].n}</span><span class="vl">${v}</span></div>
+           <div class="bar"><i data-v="${v}" class="${d===weakest&&v<70?"weak":""}"></i></div>
+           <div class="dim-note">${v<60?DIM_META[d].note.low:DIM_META[d].note.high}</div>
+         </div>`);
+    }
+    this.setProgress(100);
+    this.show("result");
+    /* animaciones */
+    setTimeout(()=>{
+      document.querySelectorAll("#r-dims .bar i").forEach(i=>i.style.width=i.dataset.v+"%");
+      const arc = document.getElementById("gauge-arc");
+      arc.style.transition = "stroke-dashoffset 1.2s cubic-bezier(.2,.7,.3,1)";
+      arc.style.strokeDashoffset = 314 - (314*this.indice/100);
+      this.animateNum("r-indice", this.indice, 1200);
+    },200);
+  },
+
+  animateNum(id,target,ms){
+    const el = document.getElementById(id); const t0 = performance.now();
+    const tick = t=>{ const p=Math.min((t-t0)/ms,1);
+      el.textContent = Math.round(target*(1-Math.pow(1-p,3)));
+      if(p<1) requestAnimationFrame(tick); };
+    requestAnimationFrame(tick);
+  },
+
+  openShare(){ document.getElementById("share").classList.add("open");
+    setTimeout(()=>document.getElementById("f-wa").focus(),350); },
+  closeShare(){ document.getElementById("share").classList.remove("open"); },
+
+  buildResumen(){
+    let dims = "";
+    for(const d in DIM_META){ dims += `\n• ${DIM_META[d].n}: ${this.scores[d]}/100`; }
+    const reco = RECOS[QUESTIONS[6].opts[this.answers.desafio].k];
+    return `📦 *Diagnóstico Logístico OCASA* — ${this.empresa||this.nombre}\n\n`+
+      `Índice de madurez: *${this.indice}/100* → ${this.perfil.n}${dims}\n\n`+
+      `Próximo paso recomendado: ${reco.t}\n\nOCASA · Logística que impulsa tu crecimiento · ocasa.com`;
+  },
+
+  async send(){
+    const wa = document.getElementById("f-wa").value.trim();
+    const email = document.getElementById("f-email").value.trim();
+    const consent = document.getElementById("f-consent").checked;
+    const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    if(!wa && !emailOk){
+      document.getElementById("f-wa").classList.add("err");
+      document.getElementById("f-email").classList.add("err"); return;
+    }
+    if(!consent){ return; }
+    const payload = {
+      evento: CONFIG.EVENTO,
+      fecha: new Date().toISOString(),
+      nombre: this.nombre, empresa: this.empresa,
+      whatsapp: wa, email: email,
+      rubro: QUESTIONS[0].opts[this.answers.rubro].t,
+      volumen: QUESTIONS[1].opts[this.answers.volumen].t,
+      segmento: this.seg,
+      desafio: QUESTIONS[6].opts[this.answers.desafio].t,
+      scores: this.scores, indice: this.indice, perfil: this.perfil.n,
+      resumen: this.buildResumen()
+    };
+    if(CONFIG.SHEETS_ENDPOINT){
+      try{
+        await fetch(CONFIG.SHEETS_ENDPOINT,{method:"POST",mode:"no-cors",
+          headers:{"Content-Type":"text/plain"},body:JSON.stringify(payload)});
+      }catch(e){ /* el kiosco no debe romperse por red */ }
+    }else{
+      console.log("DEMO — lead capturado:", payload);
+    }
+    this.closeShare(); this.sent=true;
+    document.getElementById("t-txt").innerHTML =
+      (emailOk? "Te enviamos el diagnóstico a <b>"+email+"</b>.":"Registramos tu WhatsApp para enviarte el diagnóstico.")+
+      "<br>Gracias por acercarte al stand de OCASA.";
+    this.show("thanks");
+  },
+
+  reset(){
+    this.step=-1; this.answers={}; this.sent=false;
+    ["f-nombre","f-empresa","f-wa","f-email"].forEach(id=>{
+      const el=document.getElementById(id); el.value=""; el.classList.remove("err"); });
+    document.getElementById("f-consent").checked = true;
+    const arc = document.getElementById("gauge-arc");
+    arc.style.transition="none"; arc.style.strokeDashoffset=314;
+    this.setProgress(0); this.closeShare(); this.show("start");
+  }
+};
+
+/* Auto-reinicio de kiosco por inactividad (excepto en pantalla de inicio) */
+let idleTimer;
+function armIdle(){
+  clearTimeout(idleTimer);
+  idleTimer = setTimeout(()=>{
+    if(document.querySelector(".screen.active").id!=="start") app.reset();
+  }, CONFIG.RESET_MS);
+}
+["touchstart","mousedown","keydown"].forEach(ev=>document.addEventListener(ev,armIdle,{passive:true}));
+armIdle();
+</script>
+</body>
+</html>
