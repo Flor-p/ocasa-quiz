@@ -168,6 +168,8 @@ p.qhelp{font-size:clamp(15px,1.7vw,18px);color:var(--ink-soft);margin-bottom:34p
   .opts{grid-template-columns:1fr}
 }
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
 <!-- Isologo oficial OCASA (SVG de ocasa.com). --logo-word / --logo-arrow permiten la variante blanca. -->
@@ -580,7 +582,7 @@ const app = {
       `Próximo paso recomendado: ${reco.t}\n\nOCASA · Logística que impulsa tu crecimiento · ocasa.com`;
   },
 
-  async send(){
+async send(){
     const wa = document.getElementById("f-wa").value.trim();
     const email = document.getElementById("f-email").value.trim();
     const consent = document.getElementById("f-consent").checked;
@@ -590,6 +592,22 @@ const app = {
       document.getElementById("f-email").classList.add("err"); return;
     }
     if(!consent){ return; }
+
+    // Generar PDF visual del dashboard
+    let pdfBase64 = "";
+    try{
+      const dashEl = document.querySelector("#result .dash");
+      const ctaRow = dashEl.querySelector(".cta-row");
+      ctaRow.style.display = "none";
+      const canvas = await html2canvas(dashEl, {scale:2, backgroundColor:"#F4F9F9"});
+      ctaRow.style.display = "";
+      const imgData = canvas.toDataURL("image/png");
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF("p","pt",[canvas.width/2, canvas.height/2]);
+      pdf.addImage(imgData,"PNG",0,0,canvas.width/2,canvas.height/2);
+      pdfBase64 = pdf.output("datauristring").split(",")[1];
+    }catch(e){ console.log("No se pudo generar el PDF:", e); }
+
     const payload = {
       evento: CONFIG.EVENTO,
       fecha: new Date().toISOString(),
@@ -600,7 +618,8 @@ const app = {
       segmento: this.seg,
       desafio: QUESTIONS[6].opts[this.answers.desafio].t,
       scores: this.scores, indice: this.indice, perfil: this.perfil.n,
-      resumen: this.buildResumen()
+      resumen: this.buildResumen(),
+      pdfBase64: pdfBase64
     };
     if(CONFIG.SHEETS_ENDPOINT){
       try{
