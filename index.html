@@ -467,6 +467,7 @@ const app = {
     document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
     document.getElementById(id).classList.add("active");
     document.getElementById("topbar").style.display = (id==="start") ? "none":"flex";
+    document.getElementById("topbar").classList.toggle("logo-white", id==="thanks");
   },
   setProgress(p){ document.getElementById("progress").style.width = p+"%"; },
 
