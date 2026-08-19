@@ -570,9 +570,28 @@ const app = {
     requestAnimationFrame(tick);
   },
 
-  openShare(){ document.getElementById("share").classList.add("open");
-    setTimeout(()=>document.getElementById("f-wa").focus(),350); },
+  openShare(){
+    document.getElementById("share").classList.add("open");
+    setTimeout(()=>document.getElementById("f-wa").focus(),350);
+    // Empezar a generar el PDF ya mismo, en paralelo con lo que la persona tarda en completar el form
+    this.pdfPromise = this.generarPDF();
+  },
   closeShare(){ document.getElementById("share").classList.remove("open"); },
+
+  async generarPDF(){
+    try{
+      const dashEl = document.querySelector("#result .dash");
+      const ctaRow = dashEl.querySelector(".cta-row");
+      ctaRow.style.display = "none";
+      const canvas = await html2canvas(dashEl, {scale:0.75, backgroundColor:"#F4F9F9", logging:false});
+      ctaRow.style.display = "";
+      const imgData = canvas.toDataURL("image/jpeg", 0.85);
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF("p","pt",[canvas.width, canvas.height]);
+      pdf.addImage(imgData,"JPEG",0,0,canvas.width,canvas.height);
+      return pdf.output("datauristring").split(",")[1];
+    }catch(e){ console.log("No se pudo generar el PDF:", e); return ""; }
+  },
 
   buildResumen(){
     let dims = "";
@@ -594,26 +613,13 @@ async send(){
     }
     if(!consent){ return; }
 
-    // Mostrar loader
     const sendBtn = document.querySelector('#share .btn-main');
     const originalText = sendBtn.textContent;
     sendBtn.textContent = "Generando tu diagnóstico...";
     sendBtn.disabled = true;
 
-    // Generar PDF visual del dashboard (scale reducido para mayor velocidad)
-    let pdfBase64 = "";
-    try{
-      const dashEl = document.querySelector("#result .dash");
-      const ctaRow = dashEl.querySelector(".cta-row");
-      ctaRow.style.display = "none";
-      const canvas = await html2canvas(dashEl, {scale:1, backgroundColor:"#F4F9F9"});
-      ctaRow.style.display = "";
-      const imgData = canvas.toDataURL("image/png");
-      const { jsPDF } = window.jspdf;
-      const pdf = new jsPDF("p","pt",[canvas.width, canvas.height]);
-      pdf.addImage(imgData,"PNG",0,0,canvas.width,canvas.height);
-      pdfBase64 = pdf.output("datauristring").split(",")[1];
-    }catch(e){ console.log("No se pudo generar el PDF:", e); }
+    // Usa el PDF que ya se venía generando en segundo plano desde que se abrió el modal
+    const pdfBase64 = await (this.pdfPromise || this.generarPDF());
 
     sendBtn.textContent = originalText;
     sendBtn.disabled = false;
