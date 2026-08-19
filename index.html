@@ -594,20 +594,29 @@ async send(){
     }
     if(!consent){ return; }
 
-    // Generar PDF visual del dashboard
+    // Mostrar loader
+    const sendBtn = document.querySelector('#share .btn-main');
+    const originalText = sendBtn.textContent;
+    sendBtn.textContent = "Generando tu diagnóstico...";
+    sendBtn.disabled = true;
+
+    // Generar PDF visual del dashboard (scale reducido para mayor velocidad)
     let pdfBase64 = "";
     try{
       const dashEl = document.querySelector("#result .dash");
       const ctaRow = dashEl.querySelector(".cta-row");
       ctaRow.style.display = "none";
-      const canvas = await html2canvas(dashEl, {scale:2, backgroundColor:"#F4F9F9"});
+      const canvas = await html2canvas(dashEl, {scale:1, backgroundColor:"#F4F9F9"});
       ctaRow.style.display = "";
       const imgData = canvas.toDataURL("image/png");
       const { jsPDF } = window.jspdf;
-      const pdf = new jsPDF("p","pt",[canvas.width/2, canvas.height/2]);
-      pdf.addImage(imgData,"PNG",0,0,canvas.width/2,canvas.height/2);
+      const pdf = new jsPDF("p","pt",[canvas.width, canvas.height]);
+      pdf.addImage(imgData,"PNG",0,0,canvas.width,canvas.height);
       pdfBase64 = pdf.output("datauristring").split(",")[1];
     }catch(e){ console.log("No se pudo generar el PDF:", e); }
+
+    sendBtn.textContent = originalText;
+    sendBtn.disabled = false;
 
     const payload = {
       evento: CONFIG.EVENTO,
