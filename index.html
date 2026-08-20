@@ -45,6 +45,7 @@ body{
   padding:4vh 6vw;opacity:0;visibility:hidden;transform:translateY(22px);
   transition:opacity .45s ease,transform .45s ease,visibility .45s;
   overflow-y:auto;-webkit-overflow-scrolling:touch;}
+#question, #who, #result{padding-top:11vh}
 .screen.active{opacity:1;visibility:visible;transform:translateY(0)}
 .wrap{width:100%;max-width:860px;margin:0 auto;text-align:center}
 
@@ -53,7 +54,8 @@ body{
 .brand svg{display:block}
 .logo-white{--logo-word:#fff;--logo-arrow:#fff}
 .topbar{position:fixed;top:0;left:0;right:0;display:flex;align-items:center;justify-content:space-between;
-  padding:18px 28px;z-index:20;pointer-events:none}
+  padding:18px 28px 34px;z-index:20;pointer-events:none;
+  background:linear-gradient(to bottom, rgba(244,249,249,.97) 0%, rgba(244,249,249,.85) 60%, rgba(244,249,249,0) 100%)}
 .progress{position:fixed;top:0;left:0;height:5px;background:linear-gradient(90deg,var(--calypso),var(--calypso-digital));
   width:0%;transition:width .4s ease;z-index:30;border-radius:0 4px 4px 0}
 
