@@ -43,7 +43,8 @@ body{
   background-size:140px 140px;}
 .screen{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
   padding:4vh 6vw;opacity:0;visibility:hidden;transform:translateY(22px);
-  transition:opacity .45s ease,transform .45s ease,visibility .45s;}
+  transition:opacity .45s ease,transform .45s ease,visibility .45s;
+  overflow-y:auto;-webkit-overflow-scrolling:touch;}
 .screen.active{opacity:1;visibility:visible;transform:translateY(0)}
 .wrap{width:100%;max-width:860px;margin:0 auto;text-align:center}
 
@@ -88,8 +89,10 @@ p.qhelp{font-size:clamp(15px,1.7vw,18px);color:var(--ink-soft);margin-bottom:34p
 .opt:active{transform:scale(.975)}
 .opt.sel{border-color:var(--calypso);box-shadow:0 0 0 3px rgba(0,153,168,.18);background:#F2FBFC}
 .backrow{margin-top:30px}
-.backlink{background:none;border:none;font-family:inherit;font-size:15px;font-weight:600;color:var(--ink-soft);
-  cursor:pointer;padding:12px 20px}
+.backlink{background:#fff;border:2px solid var(--line);border-radius:999px;font-family:inherit;font-size:15px;font-weight:700;
+  color:var(--calypso-deep);cursor:pointer;padding:14px 32px;box-shadow:0 6px 16px rgba(8,58,64,.08);
+  transition:transform .15s ease,box-shadow .15s ease}
+.backlink:active{transform:scale(.96)}
 
 /* ---------- datos ---------- */
 .fields{display:flex;flex-direction:column;gap:18px;max-width:560px;margin:0 auto 30px;width:100%}
@@ -163,9 +166,27 @@ p.qhelp{font-size:clamp(15px,1.7vw,18px);color:var(--ink-soft);margin-bottom:34p
 .check-anim{width:110px;height:110px;border-radius:50%;background:rgba(255,255,255,.18);display:flex;
   align-items:center;justify-content:center;margin:0 auto}
 
+/* Tablets (iPad y similares) */
+@media (max-width:1024px){
+  .screen{padding:3.5vh 5vw}
+  .dash-grid{grid-template-columns:1fr}
+}
+
+/* Celulares en general (iPhone / Android) */
 @media (max-width:760px){
+  .screen{padding:3vh 5vw;justify-content:flex-start;padding-top:6vh}
   .dash-grid{grid-template-columns:1fr}
   .opts{grid-template-columns:1fr}
+  .stats{gap:20px}
+  #start h1{font-size:clamp(28px,7vw,40px)}
+}
+
+/* Celulares chicos (iPhone SE, etc) */
+@media (max-width:400px){
+  .screen{padding:2.5vh 4vw}
+  .btn{padding:18px 32px;font-size:17px}
+  .opt{padding:18px 16px;min-height:66px}
+  .stats{gap:14px}
 }
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
